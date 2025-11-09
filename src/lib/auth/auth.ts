@@ -1,6 +1,7 @@
 import { dev } from '$app/environment';
 import { getRequestEvent } from '$app/server';
 import { AUTH_SECRET } from '$env/static/private';
+import type { userTable } from '$lib/server/db/schema';
 import {
 	createJWTSignatureMessage,
 	encodeJWT,
@@ -92,5 +93,9 @@ export async function extractEmailFromVerificationJWTCookie() {
 	if(!verificationJWT) error(500, "No verification cookie present. Use the same browser for the hole auth flow")
 	const email = await getEmailFromVerificationJWT(verificationJWT)
 	return email
+}
+type User = typeof userTable.$inferSelect;
+export async function decodeUserJWT(userJWT: string) {
+	return ((await verifyAndDecodeJWT(userJWT)) as any).value as User;
 }
 

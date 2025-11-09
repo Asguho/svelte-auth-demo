@@ -4,15 +4,11 @@ import { getOrCreateUser } from '$lib/server/db/queries';
 import { error, redirect, type Cookies } from '@sveltejs/kit';
 import * as v from 'valibot';
 import {
-	extractEmailFromVerificationJWTCookie,
+	decodeUserJWT, extractEmailFromVerificationJWTCookie,
 	getJWT,
 	sendOTPCode,
-	setVerificationJWTCookie,
-	verifyAndDecodeJWT,
-	verifyOTP
+	setVerificationJWTCookie, verifyOTP
 } from './auth';
-import { ResultAsync } from 'neverthrow';
-import { userTable } from '$lib/server/db/schema';
 
 
 export const loginWithEmail = form(
@@ -44,7 +40,6 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 	}
 });
 
-type User = typeof userTable.$inferSelect;
 
 export const getUser = query(async () => {
 	const { cookies } = getRequestEvent();
@@ -55,7 +50,11 @@ export const getUser = query(async () => {
 	return user;
 });
 
-async function decodeUserJWT(userJWT: string) {
-	return ((await verifyAndDecodeJWT(userJWT)) as any).value as User;
-}
+export const signOut = form(async()=>{
+	const { cookies } = getRequestEvent();
+	cookies.delete("user-jwt", {
+		path: "/"
+	})
+})
+
 
