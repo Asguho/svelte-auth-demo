@@ -44,6 +44,7 @@
 	"dependencies": {
 		"@oslojs/jwt": "^0.3.0",
 		"@oslojs/otp": "^1.1.0",
+		"neverthrow": "^8.2.0",
 		"postgres": "^3.4.7",
 		"valibot": "^1.1.0"
 	}
