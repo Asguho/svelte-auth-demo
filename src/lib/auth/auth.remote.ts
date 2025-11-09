@@ -1,13 +1,10 @@
 import { resolve } from '$app/paths';
 import { form, getRequestEvent, query } from '$app/server';
 import { getOrCreateUser } from '$lib/server/db/queries';
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import * as v from 'valibot';
 import {
-	decodeUserJWT, extractEmailFromVerificationJWTCookie,
-	getJWT,
-	sendOTPCode,
-	setVerificationJWTCookie, verifyOTP
+	decodeUserJWT, extractEmailFromVerificationJWTCookie, sendOTPCode, setUserJWTCookie, setVerificationJWTCookie, verifyOTP
 } from './auth';
 
 
@@ -27,16 +24,16 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 		const email = await extractEmailFromVerificationJWTCookie();
 		
 		const user = await getOrCreateUser(email);
+
 		if(user.isErr()){
 			error(500, user.error)
 		}
+
+		await setUserJWTCookie(user);
 		
-		const { cookies } = getRequestEvent();
-		const userJWT = await getJWT(user, 60 * 60 * 24 * 7);
-		cookies.set('user-jwt', userJWT, {
-			path: '/'
-		});
 		redirect(302, resolve("/"))
+	} else {
+		fail(400, {message: "OTP not valid. Try resending it"})
 	}
 });
 
@@ -56,5 +53,6 @@ export const signOut = form(async()=>{
 		path: "/"
 	})
 })
+
 
 

@@ -98,4 +98,11 @@ type User = typeof userTable.$inferSelect;
 export async function decodeUserJWT(userJWT: string) {
 	return ((await verifyAndDecodeJWT(userJWT)) as any).value as User;
 }
+export async function setUserJWTCookie(user: object) {
+	const { cookies } = getRequestEvent();
+	const userJWT = await getJWT(user, 60 * 60 * 24 * 7);
+	cookies.set('user-jwt', userJWT, {
+		path: '/'
+	});
+}
 
