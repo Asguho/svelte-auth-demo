@@ -14,7 +14,9 @@
 
 	{#if user}
 		<p>your email is {user.email} and your id is {user.id}</p>
-		<form {...signOut}><button type="submit">Sign out</button></form>
+		<form {...signOut}>
+			<button class="text-primary hover:underline" type="submit">Sign out</button>
+		</form>
 	{:else}
 		<p>
 			You not logged in. Press here: <a
