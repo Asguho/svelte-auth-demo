@@ -19,8 +19,6 @@ const key = await crypto.webcrypto.subtle.importKey('raw', secret, { name: 'HMAC
 	'sign', 'verify'
 ]);
 
-console.log(secret.toString('base64'));
-
 export function sendOTPCode(email: string) {
 	const otp = generateTOTP(secret, 30, 6);
 	if (dev) {
@@ -74,10 +72,13 @@ export async function verifyAndDecodeJWT(jwt: string) {
 interface VerificationJWTPayload {
     email: string
 }
-export async function getEmailFromVerificationJWT(verificationJWT:string){
-    const payload  = await verifyAndDecodeJWT(verificationJWT) as VerificationJWTPayload
-    return payload.email
+export async function decodeVerificationJWTCookie() {
+	const { cookies } = getRequestEvent();
+	const verificationJWT = cookies.get("verification")
+	if(!verificationJWT) error(500, "No verification cookie present. Use the same browser for the hole auth flow")
+	return await verifyAndDecodeJWT(verificationJWT) as VerificationJWTPayload
 }
+
 export async function setVerificationJWTCookie(email: string) {
 	const { cookies } = getRequestEvent();
 
@@ -87,17 +88,12 @@ export async function setVerificationJWTCookie(email: string) {
 		path: '/',
 	});
 }
-export async function extractEmailFromVerificationJWTCookie() {
-	const { cookies } = getRequestEvent();
-	const verificationJWT = cookies.get("verification")
-	if(!verificationJWT) error(500, "No verification cookie present. Use the same browser for the hole auth flow")
-	const email = await getEmailFromVerificationJWT(verificationJWT)
-	return email
-}
+
 type User = typeof userTable.$inferSelect;
 export async function decodeUserJWT(userJWT: string) {
 	return ((await verifyAndDecodeJWT(userJWT)) as any).value as User;
 }
+
 export async function setUserJWTCookie(user: object) {
 	const { cookies } = getRequestEvent();
 	const userJWT = await getJWT(user, 60 * 60 * 24 * 7);
