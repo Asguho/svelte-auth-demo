@@ -1,8 +1,5 @@
 <script lang="ts">
-	import { loginWithEmail, verifyOTPForm } from '$lib/auth/auth.remote';
-	import type { PageProps } from './$types';
-
-	let { data }: PageProps = $props();
+	import { verifyOTPForm } from '$lib/auth/auth.remote';
 </script>
 
 <main class="flex min-h-screen items-center justify-center">

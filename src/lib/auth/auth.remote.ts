@@ -1,7 +1,7 @@
 import { resolve } from '$app/paths';
 import { form, getRequestEvent, query } from '$app/server';
 import { getOrCreateUser } from '$lib/server/db/queries';
-import { error, redirect, type Cookies } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import * as v from 'valibot';
 import {
 	decodeUserJWT, extractEmailFromVerificationJWTCookie,
