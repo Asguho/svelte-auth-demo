@@ -86,4 +86,11 @@ export async function setVerificationJWTCookie(email: string) {
 		path: '/',
 	});
 }
+export async function extractEmailFromVerificationJWTCookie() {
+	const { cookies } = getRequestEvent();
+	const verificationJWT = cookies.get("verification")
+	if(!verificationJWT) error(500, "No verification cookie present. Use the same browser for the hole auth flow")
+	const email = await getEmailFromVerificationJWT(verificationJWT)
+	return email
+}
 
