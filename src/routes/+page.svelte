@@ -6,6 +6,9 @@
 </script>
 
 <main class="mt-20 flex flex-col items-center gap-2">
+	<nav>
+		<a class="text-primary hover:underline" href={resolve('/posts')}>Blog Posts</a>
+	</nav>
 	<h1 class="text-3xl">Welcome to SvelteKit</h1>
 
 	{#if user}

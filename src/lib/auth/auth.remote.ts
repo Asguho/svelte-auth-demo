@@ -25,7 +25,9 @@ export const loginWithEmail = form(
 
 export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp }) => {
 	if (verifyOTP(otp)) {
-		const { email } = await decodeVerificationJWTCookie();
+		const payload = await decodeVerificationJWTCookie();
+		if (!payload) error(401, 'Unauthorized');
+		const { email } = payload;
 
 		const user = await getOrCreateUser(email);
 
@@ -42,11 +44,10 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 });
 
 export const getUser = query(async () => {
-	const { cookies } = getRequestEvent();
-	const userJWT = cookies.get('user-jwt');
-	if (!userJWT) return null;
+	const { request } = getRequestEvent();
+	console.log([...request.headers.entries()]);
 
-	const user = await decodeUserJWT(userJWT);
+	const user = await decodeUserJWT();
 	return user;
 });
 
