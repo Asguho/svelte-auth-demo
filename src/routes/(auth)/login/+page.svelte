@@ -4,16 +4,17 @@
 
 <main class="flex min-h-screen items-center justify-center">
 	<form {...loginWithEmail}>
-		<formfield class="flex flex-col gap-4">
-			<div>
-				<label class="block text-sm" for="email">Email</label>
+		<fieldset class="flex flex-col gap-4" disabled={!!loginWithEmail.pending}>
+			<label class="text-sm" for="email">
+				Email
 				<input
-					class="border p-1 text-sm"
+					class="block border p-1"
 					placeholder="test@example.com"
+					autocomplete="email"
 					{...loginWithEmail.fields.email.as('email')}
 				/>
-			</div>
+			</label>
 			<button type="submit" class="bg-primary">Submit</button>
-		</formfield>
+		</fieldset>
 	</form>
 </main>

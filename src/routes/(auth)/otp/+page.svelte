@@ -4,16 +4,20 @@
 
 <main class="flex min-h-screen items-center justify-center">
 	<form {...verifyOTPForm}>
-		<formfield class="flex flex-col gap-4">
-			<div>
-				<label class="block text-sm" for="otp">One Time Password</label>
+		<fieldset
+			class="flex flex-col gap-4 disabled:cursor-not-allowed"
+			disabled={!!verifyOTPForm.pending}
+		>
+			<label class="text-sm">
+				One Time Password
 				<input
-					class="border p-1 text-sm"
+					class="block border p-1"
 					placeholder="000000"
+					autocomplete="off"
 					{...verifyOTPForm.fields.otp.as('number')}
 				/>
-			</div>
+			</label>
 			<button type="submit" class="bg-primary">Submit</button>
-		</formfield>
+		</fieldset>
 	</form>
 </main>
