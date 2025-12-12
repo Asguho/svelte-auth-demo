@@ -10,7 +10,8 @@
 			"files": "*.svelte",
 			"options": {
 				"parser": "svelte",
-				"bracketSameLine": false
+				"bracketSameLine": false,
+				"htmlWhitespaceSensitivity": "ignore"
 			}
 		}
 	]
