@@ -18,10 +18,8 @@
 		</form>
 	{:else}
 		<p>
-			You not logged in. Press here: <a
-				class="text-primary hover:underline"
-				href={resolve('/(auth)/login')}>Login</a
-			>
+			You not logged in. Press here:
+			<a class="text-primary hover:underline" href={resolve('/(auth)/login')}>Login</a>
 		</p>
 	{/if}
 </main>
