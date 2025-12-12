@@ -9,15 +9,17 @@ const key = await crypto.webcrypto.subtle.importKey('raw', secret, { name: 'HMAC
     'sign', 'verify'
 ]);
 
-export async function getJWT(payload: object, expiration: number) {
+async function getJWT(payload: object, expiration: number) {
+    console.log("getJWT", payload, expiration);
     const headerJSON = JSON.stringify({
         alg: joseAlgorithmHS256,
         typ: 'JWT'
     });
     const payloadJSON = JSON.stringify({
         exp: Math.floor(Date.now() / 1000) + expiration,
-        ...payload
+        value: payload
     });
+    console.log("headerJSON", headerJSON);
     const signatureBuffer = await crypto.webcrypto.subtle.sign(
         'HMAC',
         key,
@@ -27,8 +29,9 @@ export async function getJWT(payload: object, expiration: number) {
     return jwt;
 }
 
-export async function verifyAndDecodeJWT(jwt: string) {
+async function verifyAndDecodeJWT(jwt: string) {
     const [header, payload, signature, signatureMessage] = parseJWT(jwt);
+    console.log("verifyAndDecodeJWT", payload);
     const headerParameters = new JWSRegisteredHeaders(header);
     if (headerParameters.algorithm() !== joseAlgorithmHS256) {
         throw new Error('Unsupported algorithm');
@@ -42,8 +45,11 @@ export async function verifyAndDecodeJWT(jwt: string) {
 
     return payload;
 }
+
 export async function setJwtCookie({ name, payload, expiration }: { name: string; payload: object; expiration: number; }) {
     const { cookies } = getRequestEvent();
+
+    console.log("setJwtCookie", name, payload, expiration);
 
     const jwt = await getJWT(payload, expiration);
 
@@ -56,7 +62,8 @@ export async function decodeJwtFromCookie<T>(name: string) {
     const jwt = cookies.get(name);
     if (!jwt) return null;
     try {
-        return (await verifyAndDecodeJWT(jwt)) as T;
+        const payload = await verifyAndDecodeJWT(jwt);
+        return (payload as { value: T }).value;
     } catch {
         return null;
     }
