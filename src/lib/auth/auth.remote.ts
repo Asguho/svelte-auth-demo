@@ -1,14 +1,11 @@
 import { resolve } from '$app/paths';
 import { form, getRequestEvent, query } from '$app/server';
-import { sessionTable, userTable } from '$lib/server/db/schema';
+import { userTable } from '$lib/server/db/schema';
 import { error, fail, redirect } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { decodeJwtFromCookie, setJwtCookie } from './jwt';
 import { sendOTPCode, verifyOTP } from './auth';
-import { createUser, getUserByEmail } from '$lib/server/db/queries';
-import { db } from '$lib/server/db';
-import { getFirstOrThrow } from '$lib/utils';
-import { eq } from 'drizzle-orm';
+import { createRefreshSession, createUser, getUserByEmail, getUserById, updateRefreshSession } from '$lib/server/db/queries';
 
 const FIVE_MINUTES_IN_SECONDS = 5 * 60;
 const THIRTY_DAYS_IN_SECONDS = 30 * 24 * 60 * 60;
@@ -46,11 +43,7 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 		);
 	}
 
-	const session = await db.insert(sessionTable).values({
-		userId: user.id,
-		userAgent: getRequestEvent().request.headers.get('user-agent') || 'unknown',
-		issuedAt: Math.floor(Date.now() / 1000)
-	}).returning().then(getFirstOrThrow);
+	const session = await createRefreshSession(user);
 
 	await setJwtCookie({
 		name: 'refresh',
@@ -68,31 +61,36 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 });
 
 export const getUser = query(async () => {
-	{ // try to get user from short lived token
-		const user = await decodeJwtFromCookie<typeof userTable.$inferSelect>('user');
-		if (user) {
-			return user;
+	const userFromCookie = await decodeJwtFromCookie<typeof userTable.$inferSelect>('user');
+	if (userFromCookie) {
+		return userFromCookie;
+	}
+
+	const refresh = await decodeJwtFromCookie<{ userId: number; sessionId: number }>('refresh');
+	if (!refresh) return null;
+
+	const user = await getUserById(refresh.userId);
+	const updateRefreshResult = await updateRefreshSession(refresh.sessionId);
+	const updatedRefresh = updateRefreshResult.match(
+		(r) => r,
+		(e) => {
+			error(500, e);
 		}
-	}
+	);
 
-	{ // try to refresh
-		const refresh = await decodeJwtFromCookie<{ userId: number; sessionId: number }>('refresh');
-		if (!refresh) return null;
-		const user = await db.select().from(userTable).where(eq(userTable.id, refresh.userId)).then(getFirstOrThrow);
-		await setJwtCookie({
-			name: 'user',
-			payload: user,
-			expiration: FIVE_MINUTES_IN_SECONDS
-		});
-		const updatedRefresh = await db.update(sessionTable).set({ issuedAt: Math.floor(Date.now() / 1000) }).where(eq(sessionTable.id, refresh.sessionId)).returning().then(getFirstOrThrow);
-		await setJwtCookie({
-			name: 'refresh',
-			payload: { userId: refresh.userId, sessionId: updatedRefresh.id },
-			expiration: THIRTY_DAYS_IN_SECONDS
-		});
-		return user;
-	}
+	await setJwtCookie({
+		name: 'user',
+		payload: user,
+		expiration: FIVE_MINUTES_IN_SECONDS
+	});
 
+	await setJwtCookie({
+		name: 'refresh',
+		payload: { userId: refresh.userId, sessionId: updatedRefresh.id },
+		expiration: THIRTY_DAYS_IN_SECONDS
+	});
+
+	return user;
 });
 
 export const signOut = form(async () => {
@@ -100,4 +98,8 @@ export const signOut = form(async () => {
 	cookies.delete('user', {
 		path: '/'
 	});
+	cookies.delete('refresh', {
+		path: '/'
+	});
 });
+
