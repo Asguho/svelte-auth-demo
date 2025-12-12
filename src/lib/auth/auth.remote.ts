@@ -1,11 +1,19 @@
 import { resolve } from '$app/paths';
 import { form, getRequestEvent, query } from '$app/server';
 import { userTable } from '$lib/server/db/schema';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect, type RemoteQueryFunction } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { decodeJwtFromCookie, setJwtCookie } from './jwt';
 import { sendOTPCode, verifyOTP } from './auth';
-import { createRefreshSession, createUser, getUserByEmail, getUserById, updateRefreshSession } from '$lib/server/db/queries';
+import {
+	createRefreshSession,
+	createUser,
+	deleteSessionById,
+	getUserByEmail,
+	getUserById,
+	getUserSessions,
+	updateRefreshSession
+} from '$lib/server/db/queries';
 
 const FIVE_MINUTES_IN_SECONDS = 5 * 60;
 const THIRTY_DAYS_IN_SECONDS = 30 * 24 * 60 * 60;
@@ -68,7 +76,6 @@ export const getUser = query(async () => {
 	if (!refresh) return null;
 
 	user = await getUserById(refresh.userId);
-	if (!user) throw "Invalid user in refresh token";
 
 	const updateRefreshResult = await updateRefreshSession(refresh.sessionId);
 	const updatedRefresh = updateRefreshResult.match(
@@ -78,7 +85,7 @@ export const getUser = query(async () => {
 
 	await setJwtCookie({
 		name: 'user',
-		payload: user,
+		payload: user!,
 		expiration: FIVE_MINUTES_IN_SECONDS
 	});
 
@@ -90,6 +97,28 @@ export const getUser = query(async () => {
 
 	return user;
 });
+export const getUserOrLogin = query(async () => {
+	const user = await getUser();
+	if (!user) redirect(302, resolve('/login'));
+	return user;
+});
+
+export const getAllSessions = query(async () => {
+	const user = await getUserOrLogin();
+	return await getUserSessions(user.id);
+});
+
+export const deleteSession = form(v.object({ sessionId: v.number() }), async ({ sessionId }) => {
+	const user = await getUserOrLogin();
+
+	const result = await deleteSessionById(sessionId, user.id);
+	return result.match(
+		(r) => r,
+		(e) => {
+			error(500, e);
+		}
+	);
+});
 
 export const signOut = form(async () => {
 	const { cookies } = getRequestEvent();
@@ -100,4 +129,3 @@ export const signOut = form(async () => {
 		path: '/'
 	});
 });
-
