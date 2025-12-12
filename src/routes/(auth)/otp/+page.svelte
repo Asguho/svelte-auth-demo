@@ -4,10 +4,7 @@
 
 <main class="flex min-h-screen items-center justify-center">
 	<form {...verifyOTPForm}>
-		<fieldset
-			class="flex flex-col gap-4 disabled:cursor-not-allowed"
-			disabled={!!verifyOTPForm.pending}
-		>
+		<fieldset class="flex flex-col gap-4" disabled={!!verifyOTPForm.pending}>
 			<label class="text-sm">
 				One Time Password
 				<input
