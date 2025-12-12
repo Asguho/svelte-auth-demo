@@ -49,7 +49,8 @@ export async function setJwtCookie({ name, payload, expiration }: { name: string
     const jwt = await getJWT(payload, expiration);
 
     cookies.set(name, jwt, {
-        path: '/'
+        path: '/',
+        expires: new Date(Date.now() + expiration * 1000),
     });
 }
 export async function decodeJwtFromCookie<T>(name: string) {

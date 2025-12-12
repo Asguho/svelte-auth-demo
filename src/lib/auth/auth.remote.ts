@@ -15,10 +15,10 @@ export const loginWithEmail = form(
 		await setJwtCookie({
 			name: 'verification',
 			payload: { email },
-			expiration: 60 * 60 * 24 * 30
+			expiration: 60 * 5 // 5 minutes
 		});
 
-		redirect(302, resolve('/opt'));
+		redirect(302, resolve('/otp'));
 	}
 );
 
@@ -41,7 +41,7 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 	}
 
 	await setJwtCookie({
-		name: 'user-jwt',
+		name: 'session',
 		payload: user,
 		expiration: 60 * 60 * 24 * 7
 	});
@@ -50,16 +50,13 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 });
 
 export const getUser = query(async () => {
-	const { request } = getRequestEvent();
-
-	const user = await decodeJwtFromCookie<typeof userTable.$inferSelect>('user-jwt');
-
+	const user = await decodeJwtFromCookie<typeof userTable.$inferSelect>('session');
 	return user;
 });
 
 export const signOut = form(async () => {
 	const { cookies } = getRequestEvent();
-	cookies.delete('user-jwt', {
+	cookies.delete('session', {
 		path: '/'
 	});
 });
