@@ -1,8 +1,8 @@
-import { err, ok, okAsync, ResultAsync } from 'neverthrow';
+import { getFirstOrNull, getFirstOrThrow } from '$lib/utils';
+import { eq } from 'drizzle-orm';
+import { ResultAsync } from 'neverthrow';
 import { db } from '.';
 import { userTable } from './schema';
-import { eq } from 'drizzle-orm';
-import { getFirstOrNull, getFirstOrThrow } from '$lib/utils';
 
 export async function getUserByEmail(email: string) {
 	return await db.select().from(userTable).where(eq(userTable.email, email)).then(getFirstOrNull);

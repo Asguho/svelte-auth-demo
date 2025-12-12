@@ -51,10 +51,8 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 
 export const getUser = query(async () => {
 	const { request } = getRequestEvent();
-	console.log([...request.headers.entries()]);
 
 	const user = await decodeJwtFromCookie<typeof userTable.$inferSelect>('user-jwt');
-	console.log(user);
 
 	return user;
 });
