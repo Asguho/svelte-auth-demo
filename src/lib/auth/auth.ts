@@ -3,7 +3,7 @@ import { AUTH_SECRET } from '$env/static/private';
 import { generateTOTP, verifyTOTPWithGracePeriod } from '@oslojs/otp';
 import { error } from '@sveltejs/kit';
 
-const secret = Buffer.from(AUTH_SECRET, "base64");
+const secret = Buffer.from(AUTH_SECRET, 'base64');
 
 export function sendOTPCode(email: string) {
 	const otp = generateTOTP(secret, 30, 6);
@@ -17,7 +17,3 @@ export function sendOTPCode(email: string) {
 export function verifyOTP(otp: number) {
 	return verifyTOTPWithGracePeriod(secret, 30, 6, otp.toString(), 60);
 }
-
-
-
-

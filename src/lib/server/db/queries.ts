@@ -15,5 +15,5 @@ export async function createUser(user: typeof userTable.$inferInsert) {
 			console.error(e);
 			return `Failed to create user`;
 		}
-	)
+	);
 }
