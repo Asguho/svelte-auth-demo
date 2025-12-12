@@ -61,21 +61,19 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 });
 
 export const getUser = query(async () => {
-	const userFromCookie = await decodeJwtFromCookie<typeof userTable.$inferSelect>('user');
-	if (userFromCookie) {
-		return userFromCookie;
-	}
+	let user = await decodeJwtFromCookie<typeof userTable.$inferSelect>('user');
+	if (user) return user;
 
 	const refresh = await decodeJwtFromCookie<{ userId: number; sessionId: number }>('refresh');
 	if (!refresh) return null;
 
-	const user = await getUserById(refresh.userId);
+	user = await getUserById(refresh.userId);
+	if (!user) throw "Invalid user in refresh token";
+
 	const updateRefreshResult = await updateRefreshSession(refresh.sessionId);
 	const updatedRefresh = updateRefreshResult.match(
 		(r) => r,
-		(e) => {
-			error(500, e);
-		}
+		(e) => error(500, e)
 	);
 
 	await setJwtCookie({

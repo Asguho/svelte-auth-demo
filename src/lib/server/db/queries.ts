@@ -29,7 +29,7 @@ export async function updateRefreshSession(sessionId: number) {
 	);
 }
 export async function getUserById(userId: number) {
-	return await db.select().from(userTable).where(eq(userTable.id, userId)).then(getFirstOrThrow);
+	return await db.select().from(userTable).where(eq(userTable.id, userId)).then(getFirstOrNull);
 }
 export async function createRefreshSession(user: { id: number; email: string; }) {
 	return await db.insert(sessionTable).values({
