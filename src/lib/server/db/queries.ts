@@ -13,7 +13,7 @@ export async function createUser(user: typeof userTable.$inferInsert) {
 	return await ResultAsync.fromPromise(
 		db.insert(userTable).values(user).returning().then(getFirstOrThrow),
 		(e) => {
-			console.error(e);
+			console.error("failed to create user:", e);
 			return `Failed to create user`;
 		}
 	);
@@ -27,7 +27,7 @@ export async function updateRefreshSession(sessionId: number) {
 			.returning()
 			.then(getFirstOrThrow),
 		(e) => {
-			console.error(e);
+			console.error("failed to update session:", e);
 			return `Failed to update refresh session`;
 		}
 	);
@@ -55,7 +55,7 @@ export async function deleteSessionById(sessionId: number, userId: number) {
 			.delete(sessionTable)
 			.where(and(eq(sessionTable.id, sessionId), eq(sessionTable.userId, userId))),
 		(e) => {
-			console.error(e);
+			console.error("failed to delete session:", e);
 			return `Failed to delete session`;
 		}
 	);

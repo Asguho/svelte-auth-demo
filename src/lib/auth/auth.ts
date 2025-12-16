@@ -4,9 +4,10 @@ import { generateTOTP, verifyTOTPWithGracePeriod } from '@oslojs/otp';
 import { error } from '@sveltejs/kit';
 
 const secret = Buffer.from(AUTH_SECRET, 'base64');
+const FIVE_MINUTES = 5 * 60;
 
 export function sendOTPCode(email: string) {
-	const otp = generateTOTP(secret, 30, 6);
+	const otp = generateTOTP(Buffer.concat([secret, Buffer.from(email)]), FIVE_MINUTES, 6);
 	if (dev) {
 		console.log(`Sending ${otp} to ${email}`);
 	} else {
@@ -14,6 +15,6 @@ export function sendOTPCode(email: string) {
 		error(500, 'NOT IMPLEMENTED');
 	}
 }
-export function verifyOTP(otp: number) {
-	return verifyTOTPWithGracePeriod(secret, 30, 6, otp.toString(), 60);
+export function verifyOTP(otp: number, email: string) {
+	return verifyTOTPWithGracePeriod(Buffer.concat([secret, Buffer.from(email)]), FIVE_MINUTES, 6, otp.toString(), FIVE_MINUTES);
 }

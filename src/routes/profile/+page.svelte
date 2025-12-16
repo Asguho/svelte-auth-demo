@@ -19,10 +19,11 @@
 		<h2 class="text-2xl">Sessions</h2>
 		<ul>
 			{#each sessions as session}
-				<li>
+				<li class="flex">
 					{session.userAgent} - {new Date(session.issuedAt).toLocaleString()}
 					<form {...deleteSession}>
 						<input {...deleteSession.fields.sessionId.as('number')} value={session.id} hidden />
+						<button type="submit">❌</button>
 					</form>
 				</li>
 			{/each}

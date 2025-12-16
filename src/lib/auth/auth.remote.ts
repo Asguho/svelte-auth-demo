@@ -34,13 +34,13 @@ export const loginWithEmail = form(
 );
 
 export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp }) => {
-	if (!verifyOTP(otp)) {
-		fail(400, { message: 'OTP not valid. Try resending it' });
-	}
-
 	const payload = await decodeJwtFromCookie<{ email: string }>('verification');
 	if (!payload) redirect(302, resolve('/login'));
 	const { email } = payload;
+
+	if (!verifyOTP(otp, email)) {
+		fail(400, { message: 'OTP not valid. Try resending it' });
+	}
 
 	let user = await getUserByEmail(email);
 	if (!user) {
@@ -80,8 +80,10 @@ export const getUser = query(async () => {
 	const updateRefreshResult = await updateRefreshSession(refresh.sessionId);
 	const updatedRefresh = updateRefreshResult.match(
 		(r) => r,
-		(e) => error(500, e)
+		(e) => null
 	);
+
+	if (!updatedRefresh) return null;
 
 	await setJwtCookie({
 		name: 'user',
@@ -109,7 +111,14 @@ export const getAllSessions = query(async () => {
 });
 
 export const deleteSession = form(v.object({ sessionId: v.number() }), async ({ sessionId }) => {
+	// await getAllSessions.refresh();
 	const user = await getUserOrLogin();
+
+	if (sessionId === (await decodeJwtFromCookie<{ sessionId: number }>('refresh'))?.sessionId) {
+		await signOut();
+		redirect(302, resolve('/login'));
+	}
+
 
 	const result = await deleteSessionById(sessionId, user.id);
 	return result.match(
@@ -118,6 +127,8 @@ export const deleteSession = form(v.object({ sessionId: v.number() }), async ({ 
 			error(500, e);
 		}
 	);
+
+
 });
 
 export const signOut = form(async () => {
