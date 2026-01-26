@@ -103,11 +103,11 @@ export const getAllSessions = query(async () => {
 });
 
 export const deleteSession = form(v.object({ sessionId: v.number() }), async ({ sessionId }) => {
-	// await getAllSessions.refresh();
 	const user = await getUserOrLogin();
+	const currentSession = await decodeJwtFromCookie<{ sessionId: number }>('refresh');
 
-	if (sessionId === (await decodeJwtFromCookie<{ sessionId: number }>('refresh'))?.sessionId) {
-		await signOut();
+	if (sessionId === currentSession?.sessionId) {
+		await _signOut();
 		redirect(302, resolve('/login'));
 	}
 
@@ -120,7 +120,7 @@ export const deleteSession = form(v.object({ sessionId: v.number() }), async ({ 
 	);
 });
 
-export const signOut = form(async () => {
+const _signOut = async () => {
 	const { cookies } = getRequestEvent();
 	cookies.delete('user', {
 		path: '/'
@@ -128,4 +128,6 @@ export const signOut = form(async () => {
 	cookies.delete('refresh', {
 		path: '/'
 	});
-});
+};
+
+export const signOut = form(_signOut);
