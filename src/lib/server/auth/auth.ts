@@ -21,6 +21,7 @@ async function sendEmail(otpCode: string, email: string) {
 
 export async function sendOTPCode(email: string) {
 	rateLimiter.check(getRequestEvent().getClientAddress());
+	rateLimiter.check(email);
 
 	const otp = generateTOTP(Buffer.concat([secret, Buffer.from(email)]), FIVE_MINUTES, 6);
 	await sendEmail(otp, email);
@@ -28,6 +29,7 @@ export async function sendOTPCode(email: string) {
 
 export function verifyOTP(otp: number, email: string) {
 	rateLimiter.check(getRequestEvent().getClientAddress());
+	rateLimiter.check(email);
 
 	return verifyTOTPWithGracePeriod(
 		Buffer.concat([secret, Buffer.from(email)]),
