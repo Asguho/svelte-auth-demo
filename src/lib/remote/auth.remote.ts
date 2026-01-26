@@ -1,17 +1,14 @@
 import { resolve } from '$app/paths';
-import { form, getRequestEvent, query } from '$app/server';
+import { form, query } from '$app/server';
 import { userTable } from '$lib/server/db/schema';
-import { error, fail, json, redirect, type RemoteQueryFunction } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { createJwtCookieAccessors } from '../server/auth/jwt';
 import { deleteAuthCookies, sendOTPCode, verifyOTP } from '../server/auth/auth';
 import { AUTH_QUERIES } from '../server/auth/queries';
-import { RateLimiter } from '$lib/server/auth/rateLimiter';
 
 const FIVE_MINUTES_IN_SECONDS = 5 * 60;
 const THIRTY_DAYS_IN_SECONDS = 30 * 24 * 60 * 60;
-
-const rateLimiter = new RateLimiter(10, 1000 * 60 * 15); // 10 attemps every 15 minutes
 
 const [getUserFromCookie, setUserCookie] =
 	createJwtCookieAccessors<typeof userTable.$inferSelect>('user');
@@ -26,8 +23,6 @@ const [getVerificationFromCookie, setVerificationCookie] = createJwtCookieAccess
 export const loginWithEmail = form(
 	v.object({ email: v.pipe(v.string(), v.email()) }),
 	async ({ email }) => {
-		rateLimiter.check(getRequestEvent().getClientAddress());
-
 		sendOTPCode(email);
 
 		await setVerificationCookie({
@@ -40,8 +35,6 @@ export const loginWithEmail = form(
 );
 
 export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp }) => {
-	rateLimiter.check(getRequestEvent().getClientAddress());
-
 	const payload = await getVerificationFromCookie();
 	if (!payload) redirect(302, resolve('/login'));
 	const { email } = payload;
