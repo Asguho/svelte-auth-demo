@@ -1,6 +1,6 @@
 import { resolve } from '$app/paths';
 import { form, query } from '$app/server';
-import { userTable } from '$lib/server/db/schema';
+import { sessionTable, userTable } from '$lib/server/db/schema';
 import { error, fail, redirect } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { createJwtCookieAccessors } from '../server/auth/jwt';
@@ -12,10 +12,8 @@ const THIRTY_DAYS_IN_SECONDS = 30 * 24 * 60 * 60;
 
 const [getUserFromCookie, setUserCookie] =
 	createJwtCookieAccessors<typeof userTable.$inferSelect>('user');
-const [getSessionFromCookie, setSessionCookie] = createJwtCookieAccessors<{
-	userId: number;
-	sessionId: number;
-}>('refresh');
+const [getSessionFromCookie, setSessionCookie] =
+	createJwtCookieAccessors<typeof sessionTable.$inferSelect>('session');
 const [getVerificationFromCookie, setVerificationCookie] = createJwtCookieAccessors<{
 	email: string;
 }>('verification');
@@ -55,7 +53,7 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 	const session = await AUTH_QUERIES.createRefreshSession(user);
 
 	await setSessionCookie({
-		payload: { userId: user.id, sessionId: session.id },
+		payload: session,
 		expiration: THIRTY_DAYS_IN_SECONDS
 	});
 
@@ -68,31 +66,32 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 });
 
 export const getUser = query(async () => {
+	let session = await getSessionFromCookie();
+	if (!session) return null;
+
 	let user = await getUserFromCookie();
-	if (user) return user;
+	if (user) return { ...user, sessionId: session.id };
 
-	const refresh = await getSessionFromCookie();
-	if (!refresh) return null;
-
-	user = await AUTH_QUERIES.getUserById(refresh.userId);
-
-	const updateRefreshResult = await AUTH_QUERIES.updateRefreshSession(refresh.sessionId);
-
-	const updatedRefresh = updateRefreshResult.unwrapOr(null);
-	if (!updatedRefresh) return null;
+	user = await AUTH_QUERIES.getUserById(session.userId);
+	if (!user) error(500, 'User deleted');
 
 	await setUserCookie({
-		payload: user!,
+		payload: user,
 		expiration: FIVE_MINUTES_IN_SECONDS
 	});
 
+	const updatedSessionResult = await AUTH_QUERIES.updateRefreshSession(session.id);
+	session = updatedSessionResult.unwrapOr(null);
+	if (!session) return null;
+
 	await setSessionCookie({
-		payload: { userId: refresh.userId, sessionId: updatedRefresh.id },
+		payload: session,
 		expiration: THIRTY_DAYS_IN_SECONDS
 	});
 
-	return user;
+	return { ...user, sessionId: session.id };
 });
+
 export const getUserOrLogin = query(async () => {
 	const user = await getUser();
 	if (!user) redirect(302, resolve('/login'));
@@ -106,9 +105,8 @@ export const getAllSessions = query(async () => {
 
 export const deleteSession = form(v.object({ sessionId: v.number() }), async ({ sessionId }) => {
 	const user = await getUserOrLogin();
-	const currentSession = await getSessionFromCookie();
 
-	if (sessionId === currentSession?.sessionId) {
+	if (sessionId === user.sessionId) {
 		deleteAuthCookies();
 		redirect(302, resolve('/login'));
 	}

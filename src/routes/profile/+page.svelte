@@ -21,6 +21,9 @@
 			{#each sessions as session (session.id)}
 				<li class="flex">
 					{session.userAgent} - {new Date(session.issuedAt).toLocaleString()}
+					{#if session.id === user.sessionId}
+						<strong>(current)</strong>
+					{/if}
 					<form {...deleteSession.for(session.id)}>
 						<input {...deleteSession.fields.sessionId.as('number')} value={session.id} hidden />
 						<button type="submit">❌</button>
