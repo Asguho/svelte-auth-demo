@@ -8,3 +8,10 @@ export function getFirstOrThrow<T>(arr: T[]): T {
 	}
 	return first;
 }
+export function tryOrNull<T>(fn: () => T): T | null {
+	try {
+		return fn();
+	} catch {
+		return null;
+	}
+}

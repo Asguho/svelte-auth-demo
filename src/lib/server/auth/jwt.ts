@@ -9,6 +9,7 @@ import {
 import crypto from 'node:crypto';
 import { AUTH_SECRET } from '$env/static/private';
 import { getRequestEvent } from '$app/server';
+import { tryOrNull } from '$lib/helpers/error';
 
 const secret = Buffer.from(AUTH_SECRET, 'base64');
 
@@ -82,12 +83,10 @@ async function decodeJwtFromCookie<T>(name: string) {
 	const { cookies } = getRequestEvent();
 	const jwt = cookies.get(name);
 	if (!jwt) return null;
-	try {
+	return tryOrNull(async () => {
 		const payload = await verifyAndDecodeJWT(jwt);
 		return (payload as { value: T }).value;
-	} catch {
-		return null;
-	}
+	});
 }
 
 export function createJwtCookieAccessors<T extends object>(name: string) {
