@@ -19,6 +19,7 @@ export class AUTH_QUERIES {
 			}
 		);
 	}
+
 	static async updateRefreshSession(sessionId: number) {
 		return await ResultAsync.fromPromise(
 			db
@@ -33,9 +34,11 @@ export class AUTH_QUERIES {
 			}
 		);
 	}
+
 	static async getUserById(userId: number) {
 		return await db.select().from(userTable).where(eq(userTable.id, userId)).then(getFirstOrNull);
 	}
+
 	static async createRefreshSession(user: { id: number; email: string }) {
 		return await db
 			.insert(sessionTable)
@@ -47,9 +50,11 @@ export class AUTH_QUERIES {
 			.returning()
 			.then(getFirstOrThrow);
 	}
+
 	static async getUserSessions(userId: any) {
 		return await db.select().from(sessionTable).where(eq(sessionTable.userId, userId));
 	}
+
 	static async deleteSessionById(sessionId: number, userId: number) {
 		return ResultAsync.fromPromise(
 			db

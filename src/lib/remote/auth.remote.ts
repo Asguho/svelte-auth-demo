@@ -1,22 +1,36 @@
 import { resolve } from '$app/paths';
 import { form, getRequestEvent, query } from '$app/server';
 import { userTable } from '$lib/server/db/schema';
-import { error, fail, redirect, type RemoteQueryFunction } from '@sveltejs/kit';
+import { error, fail, json, redirect, type RemoteQueryFunction } from '@sveltejs/kit';
 import * as v from 'valibot';
-import { decodeJwtFromCookie, setJwtCookie } from '../server/auth/jwt';
-import { sendOTPCode, verifyOTP } from '../server/auth/auth';
+import { createJwtCookieAccessors } from '../server/auth/jwt';
+import { deleteAuthCookies, sendOTPCode, verifyOTP } from '../server/auth/auth';
 import { AUTH_QUERIES } from '../server/auth/queries';
+import { RateLimiter } from '$lib/server/auth/rateLimiter';
 
 const FIVE_MINUTES_IN_SECONDS = 5 * 60;
 const THIRTY_DAYS_IN_SECONDS = 30 * 24 * 60 * 60;
 
+const rateLimiter = new RateLimiter(10, 1000 * 60 * 15); // 10 attemps every 15 minutes
+
+const [getUserFromCookie, setUserCookie] =
+	createJwtCookieAccessors<typeof userTable.$inferSelect>('user');
+const [getSessionFromCookie, setSessionCookie] = createJwtCookieAccessors<{
+	userId: number;
+	sessionId: number;
+}>('refresh');
+const [getVerificationFromCookie, setVerificationCookie] = createJwtCookieAccessors<{
+	email: string;
+}>('verification');
+
 export const loginWithEmail = form(
 	v.object({ email: v.pipe(v.string(), v.email()) }),
 	async ({ email }) => {
+		rateLimiter.check(getRequestEvent().getClientAddress());
+
 		sendOTPCode(email);
 
-		await setJwtCookie({
-			name: 'verification',
+		await setVerificationCookie({
 			payload: { email },
 			expiration: FIVE_MINUTES_IN_SECONDS
 		});
@@ -26,7 +40,9 @@ export const loginWithEmail = form(
 );
 
 export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp }) => {
-	const payload = await decodeJwtFromCookie<{ email: string }>('verification');
+	rateLimiter.check(getRequestEvent().getClientAddress());
+
+	const payload = await getVerificationFromCookie();
 	if (!payload) redirect(302, resolve('/login'));
 	const { email } = payload;
 
@@ -45,14 +61,12 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 
 	const session = await AUTH_QUERIES.createRefreshSession(user);
 
-	await setJwtCookie({
-		name: 'refresh',
+	await setSessionCookie({
 		payload: { userId: user.id, sessionId: session.id },
 		expiration: THIRTY_DAYS_IN_SECONDS
 	});
 
-	await setJwtCookie({
-		name: 'user',
+	await setUserCookie({
 		payload: user,
 		expiration: FIVE_MINUTES_IN_SECONDS
 	});
@@ -61,10 +75,10 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 });
 
 export const getUser = query(async () => {
-	let user = await decodeJwtFromCookie<typeof userTable.$inferSelect>('user');
+	let user = await getUserFromCookie();
 	if (user) return user;
 
-	const refresh = await decodeJwtFromCookie<{ userId: number; sessionId: number }>('refresh');
+	const refresh = await getSessionFromCookie();
 	if (!refresh) return null;
 
 	user = await AUTH_QUERIES.getUserById(refresh.userId);
@@ -77,14 +91,12 @@ export const getUser = query(async () => {
 
 	if (!updatedRefresh) return null;
 
-	await setJwtCookie({
-		name: 'user',
+	await setUserCookie({
 		payload: user!,
 		expiration: FIVE_MINUTES_IN_SECONDS
 	});
 
-	await setJwtCookie({
-		name: 'refresh',
+	await setSessionCookie({
 		payload: { userId: refresh.userId, sessionId: updatedRefresh.id },
 		expiration: THIRTY_DAYS_IN_SECONDS
 	});
@@ -104,10 +116,10 @@ export const getAllSessions = query(async () => {
 
 export const deleteSession = form(v.object({ sessionId: v.number() }), async ({ sessionId }) => {
 	const user = await getUserOrLogin();
-	const currentSession = await decodeJwtFromCookie<{ sessionId: number }>('refresh');
+	const currentSession = await getSessionFromCookie();
 
 	if (sessionId === currentSession?.sessionId) {
-		await _signOut();
+		deleteAuthCookies();
 		redirect(302, resolve('/login'));
 	}
 
@@ -120,14 +132,4 @@ export const deleteSession = form(v.object({ sessionId: v.number() }), async ({ 
 	);
 });
 
-const _signOut = async () => {
-	const { cookies } = getRequestEvent();
-	cookies.delete('user', {
-		path: '/'
-	});
-	cookies.delete('refresh', {
-		path: '/'
-	});
-};
-
-export const signOut = form(_signOut);
+export const signOut = form(deleteAuthCookies);

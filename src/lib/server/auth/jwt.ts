@@ -88,3 +88,11 @@ export async function decodeJwtFromCookie<T>(name: string) {
 		return null;
 	}
 }
+
+export function createJwtCookieAccessors<T extends Object>(name: string) {
+	return [
+		async () => await decodeJwtFromCookie<T>(name),
+		async ({ payload, expiration }: { payload: T; expiration: number }) =>
+			await setJwtCookie({ name, payload, expiration })
+	] as const;
+}

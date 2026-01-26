@@ -1,4 +1,5 @@
 import { dev } from '$app/environment';
+import { getRequestEvent } from '$app/server';
 import { AUTH_SECRET } from '$env/static/private';
 import { generateTOTP, verifyTOTPWithGracePeriod } from '@oslojs/otp';
 import { error } from '@sveltejs/kit';
@@ -16,5 +17,20 @@ export function sendOTPCode(email: string) {
 	}
 }
 export function verifyOTP(otp: number, email: string) {
-	return verifyTOTPWithGracePeriod(Buffer.concat([secret, Buffer.from(email)]), FIVE_MINUTES, 6, otp.toString(), FIVE_MINUTES);
+	return verifyTOTPWithGracePeriod(
+		Buffer.concat([secret, Buffer.from(email)]),
+		FIVE_MINUTES,
+		6,
+		otp.toString(),
+		FIVE_MINUTES
+	);
+}
+export function deleteAuthCookies() {
+	const { cookies } = getRequestEvent();
+	cookies.delete('user', {
+		path: '/'
+	});
+	cookies.delete('refresh', {
+		path: '/'
+	});
 }
