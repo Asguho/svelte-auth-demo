@@ -59,7 +59,7 @@ async function verifyAndDecodeJWT(jwt: string) {
 	return payload;
 }
 
-export async function setJwtCookie({
+async function setJwtCookie({
 	name,
 	payload,
 	expiration
@@ -77,7 +77,8 @@ export async function setJwtCookie({
 		expires: new Date(Date.now() + expiration * 1000)
 	});
 }
-export async function decodeJwtFromCookie<T>(name: string) {
+
+async function decodeJwtFromCookie<T>(name: string) {
 	const { cookies } = getRequestEvent();
 	const jwt = cookies.get(name);
 	if (!jwt) return null;
