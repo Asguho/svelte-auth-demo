@@ -8,7 +8,7 @@
 <main class="mx-auto max-w-3xl *:mt-8">
 	<section>
 		<h1 class="text-4xl">Profile</h1>
-		{#each Object.entries(user) as [key, value]}
+		{#each Object.entries(user) as [key, value] (key)}
 			<p>
 				<strong>{key}:</strong>
 				{value}
@@ -18,7 +18,7 @@
 	<section>
 		<h2 class="text-2xl">Sessions</h2>
 		<ul>
-			{#each sessions as session}
+			{#each sessions as session (session.id)}
 				<li class="flex">
 					{session.userAgent} - {new Date(session.issuedAt).toLocaleString()}
 					<form {...deleteSession.for(session.id)}>

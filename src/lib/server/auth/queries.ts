@@ -51,7 +51,7 @@ export class AUTH_QUERIES {
 			.then(getFirstOrThrow);
 	}
 
-	static async getUserSessions(userId: any) {
+	static async getUserSessions(userId: number) {
 		return await db
 			.select()
 			.from(sessionTable)

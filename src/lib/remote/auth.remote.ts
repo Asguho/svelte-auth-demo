@@ -77,11 +77,8 @@ export const getUser = query(async () => {
 	user = await AUTH_QUERIES.getUserById(refresh.userId);
 
 	const updateRefreshResult = await AUTH_QUERIES.updateRefreshSession(refresh.sessionId);
-	const updatedRefresh = updateRefreshResult.match(
-		(r) => r,
-		(e) => null
-	);
 
+	const updatedRefresh = updateRefreshResult.unwrapOr(null);
 	if (!updatedRefresh) return null;
 
 	await setUserCookie({

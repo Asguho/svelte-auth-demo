@@ -89,7 +89,7 @@ export async function decodeJwtFromCookie<T>(name: string) {
 	}
 }
 
-export function createJwtCookieAccessors<T extends Object>(name: string) {
+export function createJwtCookieAccessors<T extends object>(name: string) {
 	return [
 		async () => await decodeJwtFromCookie<T>(name),
 		async ({ payload, expiration }: { payload: T; expiration: number }) =>
