@@ -1,5 +1,5 @@
 import { getFirstOrNull, getFirstOrThrow } from '$lib/utils';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { ResultAsync } from 'neverthrow';
 import { getRequestEvent } from '$app/server';
 import { db } from '$lib/server/db';
@@ -52,7 +52,11 @@ export class AUTH_QUERIES {
 	}
 
 	static async getUserSessions(userId: any) {
-		return await db.select().from(sessionTable).where(eq(sessionTable.userId, userId));
+		return await db
+			.select()
+			.from(sessionTable)
+			.where(eq(sessionTable.userId, userId))
+			.orderBy(desc(sessionTable.issuedAt));
 	}
 
 	static async deleteSessionById(sessionId: number, userId: number) {

@@ -23,7 +23,7 @@ const [getVerificationFromCookie, setVerificationCookie] = createJwtCookieAccess
 export const loginWithEmail = form(
 	v.object({ email: v.pipe(v.string(), v.email()) }),
 	async ({ email }) => {
-		sendOTPCode(email);
+		await sendOTPCode(email);
 
 		await setVerificationCookie({
 			payload: { email },
@@ -117,6 +117,9 @@ export const deleteSession = form(v.object({ sessionId: v.number() }), async ({ 
 	}
 
 	const result = await AUTH_QUERIES.deleteSessionById(sessionId, user.id);
+
+	await getAllSessions().refresh();
+
 	return result.match(
 		(r) => r,
 		(e) => {

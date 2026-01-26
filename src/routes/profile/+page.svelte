@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { deleteSession, getAllSessions, getUserOrLogin } from '$lib/remote/auth.remote';
 
-	const sessions = await getAllSessions();
-	const user = await getUserOrLogin();
+	const sessions = $derived(await getAllSessions());
+	const user = $derived(await getUserOrLogin());
 </script>
 
 <main class="mx-auto max-w-3xl *:mt-8">
@@ -21,7 +21,7 @@
 			{#each sessions as session}
 				<li class="flex">
 					{session.userAgent} - {new Date(session.issuedAt).toLocaleString()}
-					<form {...deleteSession}>
+					<form {...deleteSession.for(session.id)}>
 						<input {...deleteSession.fields.sessionId.as('number')} value={session.id} hidden />
 						<button type="submit">❌</button>
 					</form>
