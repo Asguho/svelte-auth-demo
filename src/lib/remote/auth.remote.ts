@@ -12,8 +12,10 @@ const THIRTY_DAYS_IN_SECONDS = 30 * 24 * 60 * 60;
 
 const [getUserFromCookie, setUserCookie] =
 	createJwtCookieAccessors<typeof userTable.$inferSelect>('user');
+
 const [getSessionFromCookie, setSessionCookie] =
 	createJwtCookieAccessors<typeof sessionTable.$inferSelect>('session');
+
 const [getVerificationFromCookie, setVerificationCookie] = createJwtCookieAccessors<{
 	email: string;
 }>('verification');

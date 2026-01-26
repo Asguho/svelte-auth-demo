@@ -3,9 +3,7 @@ export function getFirstOrNull<T>(arr: T[]): T | null {
 }
 export function getFirstOrThrow<T>(arr: T[]): T {
 	const first = getFirstOrNull(arr);
-	if (first === null) {
-		throw new Error('Array is empty');
-	}
+	if (first === null) throw new Error('Array is empty');
 	return first;
 }
 export function tryOrNull<T>(fn: () => T): T | null {
