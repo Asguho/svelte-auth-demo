@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { getUser, signOut } from '$lib/auth/auth.remote';
+	import { getUser, signOut } from '$lib/remote/auth.remote';
 
 	let user = $derived(await getUser());
 </script>

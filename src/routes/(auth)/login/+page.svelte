@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { loginWithEmail } from '$lib/auth/auth.remote';
+	import { loginWithEmail } from '$lib/remote/auth.remote';
 </script>
 
 <main class="flex min-h-screen items-center justify-center">

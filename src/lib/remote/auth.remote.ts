@@ -3,17 +3,9 @@ import { form, getRequestEvent, query } from '$app/server';
 import { userTable } from '$lib/server/db/schema';
 import { error, fail, redirect, type RemoteQueryFunction } from '@sveltejs/kit';
 import * as v from 'valibot';
-import { decodeJwtFromCookie, setJwtCookie } from './jwt';
-import { sendOTPCode, verifyOTP } from './auth';
-import {
-	createRefreshSession,
-	createUser,
-	deleteSessionById,
-	getUserByEmail,
-	getUserById,
-	getUserSessions,
-	updateRefreshSession
-} from '$lib/server/db/queries';
+import { decodeJwtFromCookie, setJwtCookie } from '../server/auth/jwt';
+import { sendOTPCode, verifyOTP } from '../server/auth/auth';
+import { AUTH_QUERIES } from '../server/auth/queries';
 
 const FIVE_MINUTES_IN_SECONDS = 5 * 60;
 const THIRTY_DAYS_IN_SECONDS = 30 * 24 * 60 * 60;
@@ -21,7 +13,7 @@ const THIRTY_DAYS_IN_SECONDS = 30 * 24 * 60 * 60;
 export const loginWithEmail = form(
 	v.object({ email: v.pipe(v.string(), v.email()) }),
 	async ({ email }) => {
-		await sendOTPCode(email);
+		sendOTPCode(email);
 
 		await setJwtCookie({
 			name: 'verification',
@@ -42,16 +34,16 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 		fail(400, { message: 'OTP not valid. Try resending it' });
 	}
 
-	let user = await getUserByEmail(email);
+	let user = await AUTH_QUERIES.getUserByEmail(email);
 	if (!user) {
-		const userResult = await createUser({ email });
+		const userResult = await AUTH_QUERIES.createUser({ email });
 		user = userResult.match(
 			(u) => u,
 			(e) => error(500, e)
 		);
 	}
 
-	const session = await createRefreshSession(user);
+	const session = await AUTH_QUERIES.createRefreshSession(user);
 
 	await setJwtCookie({
 		name: 'refresh',
@@ -75,9 +67,9 @@ export const getUser = query(async () => {
 	const refresh = await decodeJwtFromCookie<{ userId: number; sessionId: number }>('refresh');
 	if (!refresh) return null;
 
-	user = await getUserById(refresh.userId);
+	user = await AUTH_QUERIES.getUserById(refresh.userId);
 
-	const updateRefreshResult = await updateRefreshSession(refresh.sessionId);
+	const updateRefreshResult = await AUTH_QUERIES.updateRefreshSession(refresh.sessionId);
 	const updatedRefresh = updateRefreshResult.match(
 		(r) => r,
 		(e) => null
@@ -107,7 +99,7 @@ export const getUserOrLogin = query(async () => {
 
 export const getAllSessions = query(async () => {
 	const user = await getUserOrLogin();
-	return await getUserSessions(user.id);
+	return await AUTH_QUERIES.getUserSessions(user.id);
 });
 
 export const deleteSession = form(v.object({ sessionId: v.number() }), async ({ sessionId }) => {
@@ -119,16 +111,13 @@ export const deleteSession = form(v.object({ sessionId: v.number() }), async ({ 
 		redirect(302, resolve('/login'));
 	}
 
-
-	const result = await deleteSessionById(sessionId, user.id);
+	const result = await AUTH_QUERIES.deleteSessionById(sessionId, user.id);
 	return result.match(
 		(r) => r,
 		(e) => {
 			error(500, e);
 		}
 	);
-
-
 });
 
 export const signOut = form(async () => {
