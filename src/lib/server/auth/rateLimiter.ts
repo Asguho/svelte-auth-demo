@@ -6,12 +6,13 @@ interface LogEntry {
 
 export class RateLimiter {
 	private store = new Map<string, LogEntry[]>();
+	private cleanupInterval: NodeJS.Timeout;
 
 	constructor(
 		private maxAttempts: number,
 		private windowMs: number
 	) {
-		setInterval(() => this.cleanUp, windowMs);
+		this.cleanupInterval = setInterval(() => this.cleanUp, windowMs);
 	}
 
 	check(identifier: string) {
@@ -38,5 +39,9 @@ export class RateLimiter {
 				this.store.set(key, filtered);
 			}
 		}
+	}
+
+	destroy() {
+		clearInterval(this.cleanupInterval);
 	}
 }
