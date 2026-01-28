@@ -9,7 +9,7 @@ export const sessionTable = pgTable('session', {
 	id: serial('id').primaryKey(),
 	userId: integer('user_id')
 		.notNull()
-		.references(() => userTable.id),
+		.references(() => userTable.id, { onDelete: 'cascade' }),
 	issuedAt: integer('issued_at').notNull(),
 	userAgent: varchar('user_agent').notNull()
 });
