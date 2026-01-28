@@ -7,7 +7,6 @@
       "dependencies": {
         "@oslojs/jwt": "^0.3.0",
         "@oslojs/otp": "^1.1.0",
-        "eslint-plugin-neverthrow": "^1.1.4",
         "neverthrow": "^8.2.0",
         "valibot": "^1.2.0",
       },
@@ -24,6 +23,7 @@
         "drizzle-orm": "^0.45.1",
         "eslint": "^9.39.2",
         "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-neverthrow": "^1.1.4",
         "eslint-plugin-svelte": "^3.14.0",
         "globals": "^17.1.0",
         "prettier": "^3.8.1",

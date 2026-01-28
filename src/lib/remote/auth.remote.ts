@@ -52,7 +52,7 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 		);
 	}
 
-	const session = await AUTH_QUERIES.createRefreshSession(user);
+	const session = await AUTH_QUERIES.createRefreshSession(user.id);
 
 	await setSessionCookie({
 		payload: session,

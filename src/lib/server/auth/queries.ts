@@ -39,11 +39,11 @@ export class AUTH_QUERIES {
 		return await db.select().from(userTable).where(eq(userTable.id, userId)).then(getFirstOrNull);
 	}
 
-	static async createRefreshSession(user: { id: number; email: string }) {
+	static async createRefreshSession(userId: number) {
 		return await db
 			.insert(sessionTable)
 			.values({
-				userId: user.id,
+				userId: userId,
 				userAgent: getRequestEvent().request.headers.get('user-agent') || 'unknown',
 				issuedAt: Math.floor(Date.now() / 1000)
 			})
