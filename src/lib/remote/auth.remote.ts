@@ -77,19 +77,19 @@ export const getUser = query(async () => {
 	user = await AUTH_QUERIES.getUserById(session.userId);
 	if (!user) error(500, 'User deleted');
 
-	await setUserCookie({
-		payload: user,
-		expiration: FIVE_MINUTES_IN_SECONDS
-	});
+	// await setUserCookie({
+	// 	payload: user,
+	// 	expiration: FIVE_MINUTES_IN_SECONDS
+	// });
 
 	const updatedSessionResult = await AUTH_QUERIES.updateRefreshSession(session.id);
 	session = updatedSessionResult.unwrapOr(null);
 	if (!session) return null;
 
-	await setSessionCookie({
-		payload: session,
-		expiration: THIRTY_DAYS_IN_SECONDS
-	});
+	// await setSessionCookie({
+	// 	payload: session,
+	// 	expiration: THIRTY_DAYS_IN_SECONDS
+	// });
 
 	return { ...user, sessionId: session.id };
 });
