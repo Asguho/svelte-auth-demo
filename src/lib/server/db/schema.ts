@@ -7,7 +7,9 @@ export const userTable = pgTable('user', {
 
 export const sessionTable = pgTable('session', {
 	id: serial('id').primaryKey(),
-	userId: integer('user_id').notNull(),
+	userId: integer('user_id')
+		.notNull()
+		.references(() => userTable.id),
 	issuedAt: integer('issued_at').notNull(),
 	userAgent: varchar('user_agent').notNull()
 });
