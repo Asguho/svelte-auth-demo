@@ -24,7 +24,7 @@ export class AUTH_QUERIES {
 		return await ResultAsync.fromPromise(
 			db
 				.update(sessionTable)
-				.set({ issuedAt: Math.floor(Date.now() / 1000) })
+				.set({ issuedAt: new Date() })
 				.where(eq(sessionTable.id, sessionId))
 				.returning()
 				.then(getFirstOrThrow),
@@ -44,8 +44,7 @@ export class AUTH_QUERIES {
 			.insert(sessionTable)
 			.values({
 				userId: userId,
-				userAgent: getRequestEvent().request.headers.get('user-agent') || 'unknown',
-				issuedAt: Math.floor(Date.now() / 1000)
+				userAgent: getRequestEvent().request.headers.get('user-agent') || 'unknown'
 			})
 			.returning()
 			.then(getFirstOrThrow);

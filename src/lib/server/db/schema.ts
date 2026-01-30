@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, varchar } from 'drizzle-orm/pg-core';
+import { pgTable, serial, integer, varchar, timestamp } from 'drizzle-orm/pg-core';
 
 export const userTable = pgTable('user', {
 	id: serial('id').primaryKey(),
@@ -10,6 +10,6 @@ export const sessionTable = pgTable('session', {
 	userId: integer('user_id')
 		.notNull()
 		.references(() => userTable.id, { onDelete: 'cascade' }),
-	issuedAt: integer('issued_at').notNull(),
+	issuedAt: timestamp('issued_at').notNull().defaultNow(),
 	userAgent: varchar('user_agent').notNull()
 });
