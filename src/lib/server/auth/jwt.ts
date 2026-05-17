@@ -33,7 +33,7 @@ async function getJWT(payload: object, expiration: number) {
 	const signatureBuffer = await crypto.webcrypto.subtle.sign(
 		'HMAC',
 		key,
-		createJWTSignatureMessage(headerJSON, payloadJSON)
+		createJWTSignatureMessage(headerJSON, payloadJSON) as Uint8Array<ArrayBuffer>
 	);
 	const jwt = encodeJWT(headerJSON, payloadJSON, new Uint8Array(signatureBuffer));
 	return jwt;
@@ -48,8 +48,8 @@ async function verifyAndDecodeJWT(jwt: string) {
 	const validSignature = await crypto.webcrypto.subtle.verify(
 		'HMAC',
 		key,
-		signature,
-		signatureMessage
+		signature as Uint8Array<ArrayBuffer>,
+		signatureMessage as Uint8Array<ArrayBuffer>
 	);
 	if (!validSignature) throw new Error('Invalid signature');
 
