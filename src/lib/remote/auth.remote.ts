@@ -49,7 +49,7 @@ async function signIn(email: string) {
 
 export const loginWithEmail = form(
 	v.object({
-		email: v.pipe(v.string(), v.email()),
+		email: v.pipe(v.string(), v.toLowerCase(), v.email()),
 		token: v.optional(v.string())
 	}),
 	async ({ email, token }) => {

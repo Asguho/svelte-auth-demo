@@ -1,9 +1,14 @@
-import { pgTable, serial, integer, varchar, timestamp } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { pgTable, serial, integer, varchar, timestamp, check } from 'drizzle-orm/pg-core';
 
-export const userTable = pgTable('user', {
-	id: serial('id').primaryKey(),
-	email: varchar().unique().notNull()
-});
+export const userTable = pgTable(
+	'user',
+	{
+		id: serial('id').primaryKey(),
+		email: varchar().unique().notNull()
+	},
+	(table) => [check('user_email_lowercase', sql`${table.email} = lower(${table.email})`)]
+);
 
 export const sessionTable = pgTable('session', {
 	id: serial('id').primaryKey(),
