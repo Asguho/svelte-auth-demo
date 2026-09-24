@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { verifyOTPForm } from '$lib/remote/auth.remote';
+	import { verifyOTPForm } from '#lib/remote/auth.remote.js';
 </script>
 
 <main class="flex min-h-screen items-center justify-center">

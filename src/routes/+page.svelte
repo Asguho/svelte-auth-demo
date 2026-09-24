@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { getUser, signOut } from '$lib/remote/auth.remote';
+	import { getUser, signOut } from '#lib/remote/auth.remote.js';
 
 	let user = $derived(await getUser());
 </script>
 
 <main class="mt-20 flex flex-col items-center gap-2">
 	<nav>
-		<a class="text-primary hover:underline" href={resolve('/profile')}>Profile</a>
+		<a class="text-primary hover:underline" href={resolve('profile')}>Profile</a>
 	</nav>
 	<h1 class="text-3xl">Welcome to SvelteKit</h1>
 

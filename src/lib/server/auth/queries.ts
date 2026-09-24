@@ -1,9 +1,9 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { ResultAsync } from 'neverthrow';
 import { getRequestEvent } from '$app/server';
-import { db } from '$lib/server/db';
-import { sessionTable, userTable } from '$lib/server/db/schema';
-import { getFirstOrNull, getFirstOrThrow } from '$lib/helpers/error';
+import { db } from '#lib/server/db/index.js';
+import { sessionTable, userTable } from '#lib/server/db/schema.js';
+import { getFirstOrNull, getFirstOrThrow } from '#lib/helpers/error.js';
 
 export class AUTH_QUERIES {
 	static async getUserByEmail(email: string) {

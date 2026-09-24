@@ -1,14 +1,18 @@
-import { dev } from '$app/environment';
+import { dev } from '$app/env';
 import { getRequestEvent } from '$app/server';
-import { AUTH_SECRET } from '$env/static/private';
+import { AUTH_SECRET } from '$app/env/private';
 import { generateTOTP, verifyTOTPWithGracePeriod } from '@oslojs/otp';
 import { error } from '@sveltejs/kit';
 import { RateLimiter } from './rateLimiter';
 
 const FIVE_MINUTES = 5 * 60;
 
-const secret = Buffer.from(AUTH_SECRET, 'base64');
+const secret = Uint8Array.fromBase64(AUTH_SECRET);
 const rateLimiter = new RateLimiter(10, 1000 * 60 * 15); // 10 attemps every 15 minutes
+
+function otpKey(email: string) {
+	return new Uint8Array([...secret, ...new TextEncoder().encode(email)]);
+}
 
 async function sendEmail(otpCode: string, email: string) {
 	if (dev) {
@@ -23,7 +27,7 @@ export async function sendOTPCode(email: string) {
 	rateLimiter.check(getRequestEvent().getClientAddress());
 	rateLimiter.check(email);
 
-	const otp = generateTOTP(Buffer.concat([secret, Buffer.from(email)]), FIVE_MINUTES, 6);
+	const otp = generateTOTP(otpKey(email), FIVE_MINUTES, 6);
 	await sendEmail(otp, email);
 }
 
@@ -31,13 +35,7 @@ export function verifyOTP(otp: number, email: string) {
 	rateLimiter.check(getRequestEvent().getClientAddress());
 	rateLimiter.check(email);
 
-	return verifyTOTPWithGracePeriod(
-		Buffer.concat([secret, Buffer.from(email)]),
-		FIVE_MINUTES,
-		6,
-		otp.toString(),
-		FIVE_MINUTES
-	);
+	return verifyTOTPWithGracePeriod(otpKey(email), FIVE_MINUTES, 6, otp.toString(), FIVE_MINUTES);
 }
 
 export function deleteAuthCookies() {

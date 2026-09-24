@@ -22,7 +22,7 @@ export class RateLimiter {
 		logs = logs.filter((log) => log.timestamp > windowStart);
 
 		if (logs.length >= this.maxAttempts) {
-			error(429, { message: 'Too Many Requests' });
+			error(429, 'Too Many Requests');
 		}
 		logs.push({ timestamp: now });
 		this.store.set(identifier, logs);

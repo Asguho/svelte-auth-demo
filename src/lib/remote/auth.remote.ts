@@ -1,6 +1,6 @@
 import { resolve } from '$app/paths';
 import { form, query } from '$app/server';
-import { sessionTable, userTable } from '$lib/server/db/schema';
+import { sessionTable, userTable } from '#lib/server/db/schema.js';
 import { error, fail, redirect } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { createJwtCookieAccessors } from '../server/auth/jwt';
@@ -9,13 +9,10 @@ import { AUTH_QUERIES } from '../server/auth/queries';
 
 const FIVE_MINUTES_IN_SECONDS = 5 * 60;
 const THIRTY_DAYS_IN_SECONDS = 30 * 24 * 60 * 60;
-
 const [getUserFromCookie, setUserCookie] =
 	createJwtCookieAccessors<typeof userTable.$inferSelect>('user');
-
 const [getSessionFromCookie, setSessionCookie] =
 	createJwtCookieAccessors<typeof sessionTable.$inferSelect>('session');
-
 const [getVerificationFromCookie, setVerificationCookie] = createJwtCookieAccessors<{
 	email: string;
 }>('verification');
@@ -24,19 +21,14 @@ export const loginWithEmail = form(
 	v.object({ email: v.pipe(v.string(), v.email()) }),
 	async ({ email }) => {
 		await sendOTPCode(email);
-
-		await setVerificationCookie({
-			payload: { email },
-			expiration: FIVE_MINUTES_IN_SECONDS
-		});
-
-		redirect(302, resolve('/otp'));
+		await setVerificationCookie({ payload: { email }, expiration: FIVE_MINUTES_IN_SECONDS });
+		redirect(302, resolve('otp'));
 	}
 );
 
 export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp }) => {
 	const payload = await getVerificationFromCookie();
-	if (!payload) redirect(302, resolve('/login'));
+	if (!payload) redirect(302, resolve('login'));
 	const { email } = payload;
 
 	if (!verifyOTP(otp, email)) {
@@ -96,7 +88,7 @@ export const getUser = query(async () => {
 
 export const getUserOrLogin = query(async () => {
 	const user = await getUser();
-	if (!user) redirect(302, resolve('/login'));
+	if (!user) redirect(302, resolve('login'));
 	return user;
 });
 
@@ -110,7 +102,7 @@ export const deleteSession = form(v.object({ sessionId: v.number() }), async ({ 
 
 	if (sessionId === user.sessionId) {
 		deleteAuthCookies();
-		redirect(302, resolve('/login'));
+		redirect(302, resolve('login'));
 	}
 
 	const result = await AUTH_QUERIES.deleteSessionById(sessionId, user.id);

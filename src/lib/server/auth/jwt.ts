@@ -6,20 +6,16 @@ import {
 	JWTRegisteredClaims,
 	parseJWT
 } from '@oslojs/jwt';
-import crypto from 'node:crypto';
-import { AUTH_SECRET } from '$env/static/private';
+import { AUTH_SECRET } from '$app/env/private';
 import { getRequestEvent } from '$app/server';
-import { tryOrNull } from '$lib/helpers/error';
+import { tryOrNull } from '#lib/helpers/error.js';
 
-const secret = Buffer.from(AUTH_SECRET, 'base64');
+const secret = Uint8Array.fromBase64(AUTH_SECRET);
 
-const key = await crypto.webcrypto.subtle.importKey(
-	'raw',
-	secret,
-	{ name: 'HMAC', hash: 'SHA-256' },
-	false,
-	['sign', 'verify']
-);
+const key = await crypto.subtle.importKey('raw', secret, { name: 'HMAC', hash: 'SHA-256' }, false, [
+	'sign',
+	'verify'
+]);
 
 async function getJWT(payload: object, expiration: number) {
 	const headerJSON = JSON.stringify({
@@ -30,10 +26,10 @@ async function getJWT(payload: object, expiration: number) {
 		exp: Math.floor(Date.now() / 1000) + expiration,
 		value: payload
 	});
-	const signatureBuffer = await crypto.webcrypto.subtle.sign(
+	const signatureBuffer = await crypto.subtle.sign(
 		'HMAC',
 		key,
-		createJWTSignatureMessage(headerJSON, payloadJSON)
+		new Uint8Array(createJWTSignatureMessage(headerJSON, payloadJSON))
 	);
 	const jwt = encodeJWT(headerJSON, payloadJSON, new Uint8Array(signatureBuffer));
 	return jwt;
@@ -45,11 +41,11 @@ async function verifyAndDecodeJWT(jwt: string) {
 	if (headerParameters.algorithm() !== joseAlgorithmHS256) {
 		throw new Error('Unsupported algorithm');
 	}
-	const validSignature = await crypto.webcrypto.subtle.verify(
+	const validSignature = await crypto.subtle.verify(
 		'HMAC',
 		key,
-		signature,
-		signatureMessage
+		new Uint8Array(signature),
+		new Uint8Array(signatureMessage)
 	);
 	if (!validSignature) throw new Error('Invalid signature');
 

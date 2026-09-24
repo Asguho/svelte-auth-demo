@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { deleteSession, getAllSessions, getUserOrLogin } from '$lib/remote/auth.remote';
+	import { deleteSession, getAllSessions, getUserOrLogin } from '#lib/remote/auth.remote.js';
 
 	const sessions = $derived(await getAllSessions());
 	const user = $derived(await getUserOrLogin());
