@@ -50,6 +50,7 @@
 	"dependencies": {
 		"@oslojs/jwt": "^0.3.0",
 		"@oslojs/otp": "^1.1.0",
+		"email-verification-api": "^0.2.0",
 		"neverthrow": "^8.2.0",
 		"valibot": "^1.5.0"
 	},

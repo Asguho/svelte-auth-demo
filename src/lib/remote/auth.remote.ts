@@ -4,7 +4,12 @@ import { sessionTable, userTable } from '#lib/server/db/schema.js';
 import { error, invalid, redirect } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { createJwtCookieAccessors } from '../server/auth/jwt';
-import { deleteAuthCookies, sendOTPCode, verifyOTP } from '../server/auth/auth';
+import {
+	deleteAuthCookies,
+	sendOTPCode,
+	verifyEmailVerificationToken,
+	verifyOTP
+} from '../server/auth/auth';
 import { AUTH_QUERIES } from '../server/auth/queries';
 
 const FIVE_MINUTES_IN_SECONDS = 5 * 60;
@@ -17,22 +22,7 @@ const [getVerificationFromCookie, setVerificationCookie] = createJwtCookieAccess
 	email: string;
 }>('verification');
 
-export const loginWithEmail = form(
-	v.object({ email: v.pipe(v.string(), v.email()) }),
-	async ({ email }) => {
-		await sendOTPCode(email);
-		await setVerificationCookie({ payload: { email }, expiration: FIVE_MINUTES_IN_SECONDS });
-		redirect(302, resolve('otp'));
-	}
-);
-
-export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp }) => {
-	const payload = await getVerificationFromCookie();
-	if (!payload) redirect(302, resolve('login'));
-	const { email } = payload;
-
-	if (!verifyOTP(otp, email)) invalid('OTP not valid. Try resending it');
-
+async function signIn(email: string) {
 	let user = await AUTH_QUERIES.getUserByEmail(email);
 	if (!user) {
 		const userResult = await AUTH_QUERIES.createUser({ email });
@@ -55,6 +45,30 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 	});
 
 	redirect(302, resolve('/'));
+}
+
+export const loginWithEmail = form(
+	v.object({
+		email: v.pipe(v.string(), v.email()),
+		token: v.optional(v.string())
+	}),
+	async ({ email, token }) => {
+		if (token && (await verifyEmailVerificationToken(email, token))) return signIn(email);
+
+		await sendOTPCode(email);
+		await setVerificationCookie({ payload: { email }, expiration: FIVE_MINUTES_IN_SECONDS });
+		redirect(302, resolve('otp'));
+	}
+);
+
+export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp }) => {
+	const payload = await getVerificationFromCookie();
+	if (!payload) redirect(302, resolve('login'));
+	const { email } = payload;
+
+	if (!verifyOTP(otp, email)) invalid('OTP not valid. Try resending it');
+
+	return signIn(email);
 });
 
 export const getUser = query(async () => {
