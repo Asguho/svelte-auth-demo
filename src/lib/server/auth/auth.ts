@@ -43,7 +43,7 @@ export function deleteAuthCookies() {
 	cookies.delete('user', {
 		path: '/'
 	});
-	cookies.delete('refresh', {
+	cookies.delete('session', {
 		path: '/'
 	});
 }
