@@ -14,6 +14,9 @@
 					{...verifyOTPForm.fields.otp.as('number')}
 				/>
 			</label>
+			{#each verifyOTPForm.fields.allIssues() ?? [] as issue (issue.message)}
+				<p class="text-sm text-red-600">{issue.message}</p>
+			{/each}
 			<button type="submit" class="bg-primary">Submit</button>
 		</fieldset>
 	</form>

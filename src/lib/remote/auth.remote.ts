@@ -1,7 +1,7 @@
 import { resolve } from '$app/paths';
 import { form, query } from '$app/server';
 import { sessionTable, userTable } from '#lib/server/db/schema.js';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, invalid, redirect } from '@sveltejs/kit';
 import * as v from 'valibot';
 import { createJwtCookieAccessors } from '../server/auth/jwt';
 import { deleteAuthCookies, sendOTPCode, verifyOTP } from '../server/auth/auth';
@@ -31,9 +31,7 @@ export const verifyOTPForm = form(v.object({ otp: v.number() }), async ({ otp })
 	if (!payload) redirect(302, resolve('login'));
 	const { email } = payload;
 
-	if (!verifyOTP(otp, email)) {
-		fail(400, { message: 'OTP not valid. Try resending it' });
-	}
+	if (!verifyOTP(otp, email)) invalid('OTP not valid. Try resending it');
 
 	let user = await AUTH_QUERIES.getUserByEmail(email);
 	if (!user) {
