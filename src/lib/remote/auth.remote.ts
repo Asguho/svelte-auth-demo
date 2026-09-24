@@ -101,7 +101,7 @@ export const deleteSession = form(v.object({ sessionId: v.number() }), async ({ 
 	const user = await getUserOrLogin();
 
 	if (sessionId === user.sessionId) {
-		deleteAuthCookies();
+		await endCurrentSession();
 		redirect(302, resolve('login'));
 	}
 
@@ -117,4 +117,13 @@ export const deleteSession = form(v.object({ sessionId: v.number() }), async ({ 
 	);
 });
 
-export const signOut = form(deleteAuthCookies);
+async function endCurrentSession() {
+	const session = await getSessionFromCookie();
+	deleteAuthCookies();
+	if (!session) return;
+
+	const result = await AUTH_QUERIES.deleteSessionById(session.id, session.userId);
+	if (result.isErr()) error(500, result.error);
+}
+
+export const signOut = form(endCurrentSession);
