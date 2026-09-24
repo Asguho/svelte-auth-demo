@@ -97,33 +97,25 @@ export const getAllSessions = query(async () => {
 	return await AUTH_QUERIES.getUserSessions(user.id);
 });
 
-export const deleteSession = form(v.object({ sessionId: v.number() }), async ({ sessionId }) => {
-	const user = await getUserOrLogin();
-
-	if (sessionId === user.sessionId) {
-		await endCurrentSession();
-		redirect(302, resolve('login'));
-	}
-
-	const result = await AUTH_QUERIES.deleteSessionById(sessionId, user.id);
-
-	await getAllSessions().refresh();
-
-	return result.match(
-		(r) => r,
-		(e) => {
-			error(500, e);
-		}
-	);
-});
-
-async function endCurrentSession() {
-	const session = await getSessionFromCookie();
-	deleteAuthCookies();
-	if (!session) return;
-
-	const result = await AUTH_QUERIES.deleteSessionById(session.id, session.userId);
+async function removeSession(sessionId: number, userId: number) {
+	const result = await AUTH_QUERIES.deleteSessionById(sessionId, userId);
 	if (result.isErr()) error(500, result.error);
 }
 
-export const signOut = form(endCurrentSession);
+export const deleteSession = form(v.object({ sessionId: v.number() }), async ({ sessionId }) => {
+	const user = await getUserOrLogin();
+	await removeSession(sessionId, user.id);
+
+	if (sessionId === user.sessionId) {
+		deleteAuthCookies();
+		redirect(302, resolve('login'));
+	}
+
+	await getAllSessions().refresh();
+});
+
+export const signOut = form(async () => {
+	const session = await getSessionFromCookie();
+	if (session) await removeSession(session.id, session.userId);
+	deleteAuthCookies();
+});
